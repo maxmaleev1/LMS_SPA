@@ -1,5 +1,6 @@
 from django.core.validators import URLValidator
 from rest_framework import serializers
+from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 
 from materials.models import Lesson, Course
@@ -14,8 +15,13 @@ class LessonSerializer(ModelSerializer):
 
 
 class CourseSerializer(ModelSerializer):
-    lessons = LessonSerializer(source='lesson_set', many=True)
+    count_lessons = SerializerMethodField()
+    lessons = LessonSerializer(many=True, read_only=True)
+
+
+    def get_count_lessons(self, course):
+        return course.lesson_set.count()
 
     class Meta:
         model = Course
-        fields = '__all__'
+        fields = ('name', 'preview', 'description', 'count_lessons', 'lessons')

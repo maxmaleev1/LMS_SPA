@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+
+from materials.models import Course, Lesson
+
+
 # from materials.models import Course, Lesson
 
 
@@ -37,3 +41,53 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class Payments(models.Model):
+    CASH = 'cash'
+    TRANSFER = 'transfer'
+
+    CHOICE_PAY_METHOD = [(CASH, 'Наличные'), (TRANSFER, 'Перевод на счет'),]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        verbose_name='Пользователь',
+        blank=True,
+        null=True)
+
+    payment_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name='Дата оплаты',
+        help_text='Введите дату оплаты')
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.SET_NULL,
+        verbose_name='Курс',
+        blank=True,
+        null=True)
+
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.SET_NULL,
+        verbose_name='Урок',
+        blank=True,
+        null=True)
+
+    payment_amount = models.PositiveIntegerField(
+        verbose_name='Сумма оплаты',
+        blank=True,
+        null=True)
+
+    payment_method = models.CharField(
+        max_length=10, choices=CHOICE_PAY_METHOD, verbose_name='Способ оплаты')
+
+    class Meta:
+        verbose_name = 'Платеж'
+        verbose_name_plural = 'Платежи'
+
+    def __str__(self):
+        return (f'{self.user} оплачены урок(-и) - {self.lesson},'
+                f'курс(-ы) - {self.course}')

@@ -20,11 +20,12 @@ class Course(models.Model):
         null=True,
         help_text='Укажите описание курса')
 
-    lessons = models.ManyToManyField('Lesson', verbose_name='Уроки')
-
     class Meta:
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'
+
+    def __str__(self):
+        return f'Курс {self.name}'
 
 
 class Lesson(models.Model):
@@ -52,7 +53,7 @@ class Lesson(models.Model):
         blank=True,
         null=True)
 
-    courses = models.ForeignKey(
+    course = models.ForeignKey(
         Course,
         on_delete=models.SET_NULL,
         verbose_name='Курс',
@@ -63,3 +64,6 @@ class Lesson(models.Model):
     class Meta:
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
+
+def __str__(self):
+        return f'Урок {self.name}'
