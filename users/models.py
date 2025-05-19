@@ -1,10 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-
 from materials.models import Course, Lesson
-
-
-# from materials.models import Course, Lesson
 
 
 class User(AbstractUser):
@@ -91,3 +87,27 @@ class Payments(models.Model):
     def __str__(self):
         return (f'{self.user} оплачены урок(-и) - {self.lesson},'
                 f'курс(-ы) - {self.course}')
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        verbose_name='Пользователь',
+        blank=True,
+        null=True,
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.SET_NULL,
+        verbose_name='Подписка на курс',
+        blank=True,
+        null=True,
+    )
+    is_active = models.BooleanField(
+        default=False,
+        verbose_name='Статус подписки')
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
