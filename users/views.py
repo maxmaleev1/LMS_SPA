@@ -10,6 +10,8 @@ from materials.pagination import CustomPagination
 from users.models import Payments, User, Subscription
 from users.serializers import PaymentsSerializer, UserSerializer, \
     SubscriptionSerializer
+from users.services import create_stripe_product, create_stripe_price, \
+    create_stripe_session
 
 
 class PaymentsViewSet(ModelViewSet):
@@ -19,6 +21,16 @@ class PaymentsViewSet(ModelViewSet):
     filterset_fields = ('course', 'lesson', 'payment_method',)
     ordering_fields = ('payment_date',)
     pagination_class = CustomPagination
+
+    def perform_create(self, serializer):
+        payment = serializer.save(user=self.request.user)
+        product = payment.course.name if payment.course else payment.lesson.name
+        stripe_product = create_stripe_product(product)
+        price = create_stripe_price(payment.payment_sum, stripe_product)
+        session_id, payment_link = create_stripe_session(price)
+        payment.session_id = session_id
+        payment.link = payment_link
+        payment.save()
 
 
 class UserViewSet(ModelViewSet):
