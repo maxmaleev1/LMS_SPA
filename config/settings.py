@@ -125,3 +125,26 @@ if CACHE_ENABLED:
     }
 
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
+
+# Настройки для Celery
+# URL-адрес брокера сообщений
+CELERY_BROKER_URL = os.getenv('LOCATION') # Например, Redis, который по умолчанию работает на порту 6379
+# URL-адрес брокера результатов, также Redis
+CELERY_RESULT_BACKEND = os.getenv('LOCATION')
+# Часовой пояс для работы Celery
+CELERY_TIMEZONE = "Europe/Moscow"
+# Флаг отслеживания выполнения задач
+CELERY_TASK_TRACK_STARTED = True
+# Максимальное время на выполнение задачи
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    "sendmail_course_updated": {
+        "task": "users.tasks.sendmail_course_updated",
+        "schedule": timedelta(minutes=1),
+    },
+    "check_user_last_login": {
+        "task": "users.tasks.check_user_last_login",
+        "schedule": timedelta(days=1),
+    },
+}
