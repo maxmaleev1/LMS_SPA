@@ -139,10 +139,6 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_BEAT_SCHEDULE = {
-    "sendmail_course_updated": {
-        "task": "users.tasks.sendmail_course_updated",
-        "schedule": timedelta(minutes=1),
-    },
     "check_user_last_login": {
         "task": "users.tasks.check_user_last_login",
         "schedule": timedelta(days=1),

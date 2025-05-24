@@ -25,10 +25,10 @@ class CourseViewSet(ModelViewSet):
         course.owner = self.request.user
         course.save()
 
-    def perform_update(self, serializer):
-        updated_course = serializer.save()
-        sendmail_course_updated.delay(updated_course)
-        updated_course.save()
+    def perfom_update(self, serializer):
+        """Вызов отложенной задачи на отправку письма об обновлении курса"""
+        course = serializer.save()
+        sendmail_course_updated.delay(course.id)
 
 
 class LessonListCreateAPIView(ListCreateAPIView):
