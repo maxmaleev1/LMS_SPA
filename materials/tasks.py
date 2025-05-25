@@ -5,9 +5,9 @@ from users.models import Subscription, User
 
 
 @shared_task
-def sendmail_course_updated(course):
+def sendmail_course_updated(course_id):
     '''Отправляет уведомление о том, что курс обновлен'''
-    subscription_course = Subscription.objects.filter(course=course)
+    subscription_course = Subscription.objects.filter(course_id=course_id)
     for subscription in subscription_course:
         print(f'Отправляем уведомление на почту {subscription.user.email}')
         send_mail(
