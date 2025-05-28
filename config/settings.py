@@ -132,7 +132,7 @@ CELERY_BROKER_URL = os.getenv('LOCATION') # Например, Redis, котор�
 # URL-адрес брокера результатов, также Redis
 CELERY_RESULT_BACKEND = os.getenv('LOCATION')
 # Часовой пояс для работы Celery
-CELERY_TIMEZONE = "Europe/Moscow"
+CELERY_TIMEZONE = TIME_ZONE
 # Флаг отслеживания выполнения задач
 CELERY_TASK_TRACK_STARTED = True
 # Максимальное время на выполнение задачи
