@@ -1,24 +1,15 @@
-version: '3'
-
 services:
-  app:
-    build: .
-    container_name: app
-    command: >	    
-      bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+  redis:
+    image: redis
+    container_name: redis
+    restart: on-failure
     volumes:
-      - .:/code
-      - static_volume:/code/static
+      - redis_data:/data
     ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
+      - '6379:6379'
     env_file:
       - ./.env
-    environment:
-      - DEBUG=False
-      - DATABASE_HOST=db
 
   db:
     image: postgres
@@ -34,17 +25,6 @@ services:
     env_file:
       - ./.env
 
-  redis:
-    image: redis
-    container_name: redis
-    restart: on-failure
-    volumes:
-      - redis_data:/data
-    ports:
-      - '6379:6379'
-    env_file:
-       - ./.env
-
   celery:
     build: .
     command: >
@@ -57,6 +37,49 @@ services:
       - redis
       - db
 
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - .nginx/nginx.conf:/etc/nginx/conf.d
+      - static_volume:/code/static
+
+  web:
+    build: .
+    command: sh -c "python manage.py collectstatic --noinput \
+             && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    expose:
+      - "8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./.env
+
+  app:
+    build: .
+    container_name: app
+  command: >
+    bash -c "python manage.py migrate \
+    && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code
+      - static_volume:/code/static
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./.env
+    environment:
+      - DEBUG=False
+      - DATABASE_HOST=db
 
 volumes:
   postgres_data:
