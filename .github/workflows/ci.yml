@@ -1,10 +1,14 @@
 name: Django CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
 
 env:
-     SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-     ANOTHER_VAR: value
+  SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+  ANOTHER_VAR: value
 
 jobs:
   lint:
@@ -16,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13"
+          python-version: "3.10"
 
       - name: Install flake8
         run: |
@@ -31,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17
+        image: postgres:13
         env:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -43,28 +47,41 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgres://${{ secrets.POSTGRES_USER }}:${
+        { secrets.POSTGRES_PASSWORD }}@localhost:5432/${
+        { secrets.POSTGRES_DB }}
+      PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.13"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-    - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "export PATH=\"$HOME/.local/bin:$PATH\"" >> $GITHUB_ENV
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Install dependencies
-      run: poetry install
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create false
+          poetry config experimental.new-installer false
 
-    - name: Run migrations
-      run: poetry run python manage.py migrate
+      - name: Install dependencies
+        run: poetry install
 
-    - name: Run tests
-      run: poetry run python manage.py test
+      - name: Run migrations
+        run: poetry run python manage.py migrate
+
+      - name: Run tests
+        run: poetry run python manage.py test
 
   build:
     needs: test
@@ -83,10 +100,9 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }} \
-            .
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }} .
 
-      - name: Push Docker image to Docker Hub
+      - name: Push Docker image
         run: |
           docker push \
             ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
@@ -103,13 +119,12 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@$
-          {{ secrets.SERVER_IP }} << 'EOF'
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:$
-          {{ github.sha }}
+          ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+          docker pull \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           docker stop my_app || true
           docker rm my_app || true
-          docker run -d --name my_app -p 80:8000 $
-          {{ secrets.DOCKER_HUB_USERNAME 
-          }}/my_app:${{ github.sha }}
+          docker run -d --name my_app -p 80:8000 \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           EOF
