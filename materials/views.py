@@ -6,7 +6,7 @@ from materials.models import Course, Lesson
 from materials.pagination import CustomPagination
 from materials.serializers import CourseSerializer, LessonSerializer
 from users.permissions import IsOwner, IsModer
-from users.tasks import sendmail_course_updated
+from materials.tasks import sendmail_course_updated
 
 
 class CourseViewSet(ModelViewSet):
