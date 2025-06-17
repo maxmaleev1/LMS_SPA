@@ -1,23 +1,18 @@
-FROM python:3.13-slim
+FROM python:3.10-slim
 
 # Устанавливаем Poetry
-ENV POETRY_VERSION=1.6.1
-RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
+RUN pip install --no-cache-dir "poetry==1.6.1"
 
+# Создаём директорию приложения
 WORKDIR /app
 
-# Копируем файлы с описанием зависимостей
-COPY pyproject.toml poetry.lock* ./
-
-# Отключаем создание виртуальных окружений и устанавливаем зависимости
-RUN poetry config virtualenvs.create false \
- && poetry install --no-dev --no-interaction --no-ansi
-
-# Копируем остальной код проекта
+# Копируем весь проект сразу (в том числе папки с кодом)
 COPY . .
 
-# Создаём и настраиваем права для директории статических файлов
-RUN mkdir -p /app/staticfiles \
- && chmod -R 755 /app/staticfiles
+# Отключаем виртуальные окружения и устанавливаем зависимости (только main)
+RUN poetry config virtualenvs.create false \
+  && poetry install --only main --no-interaction --no-ansi
 
+# Открываем порт и задаём команду по умолчанию
 EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
