@@ -9,10 +9,15 @@ on:
 env:
   SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
   ANOTHER_VAR: value
+  DJANGO_SETTINGS_MODULE: config.settings
+  DATABASE_URL: postgres://${{ secrets.POSTGRES_USER }}:${{ secrets
+    .POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+  PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -33,6 +38,7 @@ jobs:
   test:
     needs: lint
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:13
@@ -47,13 +53,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-    env:
-      DJANGO_SETTINGS_MODULE: config.settings
-      DATABASE_URL: postgres://${{ secrets.POSTGRES_USER }}:${
-        { secrets.POSTGRES_PASSWORD }}@localhost:5432/${
-        { secrets.POSTGRES_DB }}
-      PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
 
     steps:
       - name: Check out code
@@ -70,8 +69,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create false
+        run: poetry config virtualenvs.create false
 
       - name: Install dependencies
         run: poetry install
