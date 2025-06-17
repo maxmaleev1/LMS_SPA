@@ -24,7 +24,8 @@ class PaymentsViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         payment = serializer.save(user=self.request.user)
-        product = payment.course.name if payment.course else payment.lesson.name
+        product = (
+            payment.course.name) if payment.course else payment.lesson.name
         stripe_product = create_stripe_product(product)
         price = create_stripe_price(payment.payment_sum, stripe_product)
         session_id, payment_link = create_stripe_session(price)
@@ -42,6 +43,7 @@ class UserViewSet(ModelViewSet):
         if self.action in ['create', 'login']:
             self.permission_classes = [AllowAny,]
         return super().get_permissions()
+
 
 class TokenObtainPairView():
     permission_classes = (AllowAny,)

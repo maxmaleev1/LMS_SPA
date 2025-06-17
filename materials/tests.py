@@ -17,7 +17,9 @@ from users.models import Subscription, User
 class LessonTestCase(APITestCase):
 
     def setUp(self):
-        self.user, created = User.objects.get_or_create(email='admin@email.com')
+        self.user, created = User.objects.get_or_create(
+            email='admin@email.com'
+        )
         self.course = Course.objects.create(
             name='Курс Тест Имя',
             description='Курс Тест Описание'
@@ -145,7 +147,9 @@ class LessonUnauthorizedTestCase(APITestCase):
 class SubscriptionTestCase(APITestCase):
 
     def setUp(self):
-        self.user, created = User.objects.get_or_create(email='admin@email.com')
+        self.user, created = User.objects.get_or_create(
+            email='admin@email.com'
+        )
         self.course = Course.objects.create(
             name='Тест',
             description='Тест'

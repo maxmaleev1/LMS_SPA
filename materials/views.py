@@ -1,4 +1,5 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (ListCreateAPIView,
+                                     RetrieveUpdateDestroyAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 from materials.models import Course, Lesson
@@ -36,6 +37,7 @@ class LessonListCreateAPIView(ListCreateAPIView):
     serializer_class = LessonSerializer
     permission_classes = (IsModer, IsAuthenticated,)
     pagination_class = CustomPagination
+
 
 class LessonRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Lesson.objects.all()

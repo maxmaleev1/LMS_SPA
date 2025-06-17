@@ -82,5 +82,5 @@ class Lesson(models.Model):
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
 
-def __str__(self):
+    def __str__(self):
         return f'Урок {self.name}'

@@ -17,7 +17,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path(
         'subscription/create/', SubscriptionCreateAPIView.as_view(),
-         name='subscription'
+        name='subscription'
     ),
 ]
 

@@ -22,10 +22,11 @@ class UserManager(BaseUserManager):
         if not extra_fields.get("is_staff"):
             raise ValueError("Суперпользователь должен иметь is_staff=True.")
         if not extra_fields.get("is_superuser"):
-            raise ValueError("Суперпользователь должен иметь is_superuser=True.")
+            raise ValueError(
+                "Суперпользователь должен иметь is_superuser=True."
+            )
 
         return self.create_user(email, password, **extra_fields)
-
 
 
 class User(AbstractUser):
