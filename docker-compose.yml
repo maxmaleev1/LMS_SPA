@@ -79,7 +79,7 @@ services:
       - ./.env
     environment:
       - DEBUG=False
-      - DATABASE_HOST=db
+      - POSTGRES_HOST=db
 
 volumes:
   postgres_data:

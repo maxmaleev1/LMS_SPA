@@ -7,17 +7,20 @@ on:
     branches: [develop, main]
 
 env:
-  DJANGO_SETTINGS_MODULE: config.settings
-  DATABASE_URL: >-
-    postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
   SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+  POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+  DJANGO_SETTINGS_MODULE: config.settings
   PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -40,9 +43,9 @@ jobs:
       postgres:
         image: postgres:13
         env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
@@ -52,7 +55,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -71,10 +74,13 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - name: Debug DATABASE_URL (удали после отладки)
-        run: echo "$DATABASE_URL"
-
       - name: Run migrations
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: 5432
         run: poetry run python manage.py migrate
 
       - name: Run tests
@@ -85,14 +91,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login \
-            -u "${{ secrets.DOCKER_HUB_USERNAME }}" \
-            --password-stdin
+            -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
         run: |
