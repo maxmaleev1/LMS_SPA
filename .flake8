@@ -5,3 +5,7 @@ exclude =
     */static/*,
     */templates/*,
     settings.py
+    .git,
+    __pycache__,
+    *.pyc,
+    *.yml
