@@ -122,7 +122,7 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no \
-            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+            "${{ secrets.SSH_PRIVATE_KEY }}@${{ secrets.SERVER_IP }}" << 'EOF'
           docker pull \
             ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           docker stop my_app || true
