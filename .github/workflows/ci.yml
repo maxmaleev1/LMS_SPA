@@ -72,7 +72,6 @@ jobs:
       - name: Configure Poetry
         run: |
           poetry config virtualenvs.create false
-          poetry config experimental.new-installer false
 
       - name: Install dependencies
         run: poetry install
