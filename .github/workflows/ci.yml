@@ -8,7 +8,8 @@ on:
 
 env:
   DJANGO_SETTINGS_MODULE: config.settings
-  DATABASE_URL: postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+  DATABASE_URL: >-
+    postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
   SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
   PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
 
@@ -70,6 +71,9 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Debug DATABASE_URL (удали после отладки)
+        run: echo "$DATABASE_URL"
+
       - name: Run migrations
         run: poetry run python manage.py migrate
 
@@ -86,15 +90,19 @@ jobs:
 
       - name: Log in to Docker Hub
         run: |
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKER_HUB_USERNAME }}" \
+            --password-stdin
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }} .
+          docker build -t \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }} .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
+          docker push \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
 
   deploy:
     needs: build
@@ -108,9 +116,12 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
-          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
+          ssh -o StrictHostKeyChecking=no \
+            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+          docker pull \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           docker stop my_app || true
           docker rm my_app || true
-          docker run -d --name my_app -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
+          docker run -d --name my_app -p 80:8000 \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           EOF
