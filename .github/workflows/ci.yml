@@ -135,11 +135,11 @@ jobs:
             done
           
             # Проверяем, занят ли порт 80, и освобождаем его
-            PORT_PID=$(sudo lsof -t -i:80 || true)
-            if [ -n "$PORT_PID" ]; then
-              echo "Порт 80 занят процессом $PORT_PID. Завершаем процесс..."
-              sudo kill -9 $PORT_PID
-            fi
+            for pid in $(sudo lsof -t -i:80 || true); do
+              echo "Порт 80 занят процессом $pid. Завершаем..."
+              sudo kill -9 "$pid"
+              sleep 1
+            done
           
             # Запускаем новый контейнер
             docker run -d --name my_app -p 80:8000 \
