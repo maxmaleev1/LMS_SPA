@@ -124,19 +124,19 @@ jobs:
           ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
             echo "📦 Pull latest image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
-          
+
             echo "🧹 Останавливаем старый контейнер (если есть)..."
             docker stop my_app || true
-          
+
             echo "⌛ Ждём удаления контейнера my_app..."
             while docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; do
               docker rm my_app || true
               sleep 1
             done
-          
+
             echo "🔍 Проверяем, кто слушает порт 80 в Docker..."
             docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}' | grep ':80' || echo "Нет контейнеров с портом 80"
-          
+
             echo "🛑 Удаляем все контейнеры с publish=80..."
             for id in $(docker ps -q --filter "publish=80"); do
               echo "Удаляем контейнер $id с портом 80..."
@@ -144,30 +144,30 @@ jobs:
               docker rm "$id" || true
               sleep 1
             done
-          
-            echo "🧠 Проверка, кто использует порт 80 на уровне системы..."
-            sudo lsof -i :80 || true
-          
-            echo "🔪 Завершаем процессы, использующие порт 80..."
-            for pid in $(sudo lsof -t -i:80 || true); do
+
+            echo "🧠 Проверка, кто СЛУШАЕТ порт 80 (LISTEN)..."
+            sudo lsof -nP -iTCP:80 -sTCP:LISTEN || true
+
+            echo "🔪 Завершаем процессы, слушающие порт 80..."
+            for pid in $(sudo lsof -nP -iTCP:80 -sTCP:LISTEN -t || true); do
               echo "Kill PID $pid"
               sudo kill -9 "$pid"
               sleep 1
             done
-          
+
             echo "⌛ Ждём, пока порт 80 освободится..."
-            while sudo lsof -i:80 > /dev/null; do
+            while sudo lsof -nP -iTCP:80 -sTCP:LISTEN > /dev/null; do
               sleep 1
             done
-          
+
             echo "✅ Порт 80 свободен. Проверка контейнера my_app..."
-          
-            # Удаляем контейнер my_app, если он остался по имени
+
+            # Удаляем контейнер my_app, если остался по имени
             if docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; then
               echo "Удаляем старый контейнер my_app (остаток)..."
               docker rm -f my_app || true
             fi
-          
+
             echo "🚀 Запуск нового контейнера..."
             docker run -d --name my_app -p 80:8000 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
