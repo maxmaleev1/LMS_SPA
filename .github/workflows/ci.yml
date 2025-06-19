@@ -123,30 +123,37 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
-          
+
             # Останавливаем контейнер, если он запущен
             docker stop my_app || true
-          
+
             # Ждём, пока контейнер полностью удалится
             while docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; do
               echo "Ожидание удаления контейнера my_app..."
               sleep 1
               docker rm my_app || true
             done
-          
-            # Проверяем и освобождаем порт 80 (убиваем все процессы)
+
+            # Проверяем, кто использует порт 80
+            echo "Проверка, кто использует порт 80:"
+            sudo lsof -i :80 || true
+
+            # Завершаем все процессы, использующие порт 80
             for pid in $(sudo lsof -t -i:80 || true); do
               echo "Порт 80 занят процессом $pid. Завершаем..."
               sudo kill -9 "$pid"
               sleep 1
             done
-          
-            # Ждём, пока порт 80 окончательно освободится
+
+            # Ждём окончательного освобождения порта
             while sudo lsof -i:80 > /dev/null; do
-              echo "Порт 80 ещё занят, ждём освобождения..."
+              echo "Порт 80 ещё занят, ждём..."
               sleep 1
             done
-          
+
+            echo "Порт 80 освобождён. Пауза 3 секунды перед запуском..."
+            sleep 3
+
             # Запускаем новый контейнер
             docker run -d --name my_app -p 80:8000 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
