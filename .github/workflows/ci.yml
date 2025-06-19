@@ -122,39 +122,45 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" << 'EOF'
+            echo "📦 Pull latest image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
-
-            # Останавливаем контейнер, если он запущен
+          
+            echo "🧹 Останавливаем старый контейнер (если есть)..."
             docker stop my_app || true
-
-            # Ждём, пока контейнер полностью удалится
+          
+            echo "⌛ Ждём удаления контейнера my_app..."
             while docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; do
-              echo "Ожидание удаления контейнера my_app..."
               sleep 1
               docker rm my_app || true
             done
-
-            # Проверяем, кто использует порт 80
-            echo "Проверка, кто использует порт 80:"
+          
+            echo "🔍 Проверяем, кто слушает порт 80 в Docker..."
+            docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}' | grep ':80' || echo "Нет контейнеров с портом 80"
+          
+            echo "🛑 Удаляем все контейнеры с publish=80..."
+            for id in $(docker ps -q --filter "publish=80"); do
+              echo "Удаляем контейнер $id с портом 80..."
+              docker stop "$id" || true
+              docker rm "$id" || true
+              sleep 1
+            done
+          
+            echo "🧠 Проверка, кто использует порт 80 на уровне системы..."
             sudo lsof -i :80 || true
-
-            # Завершаем все процессы, использующие порт 80
+          
+            echo "🔪 Завершаем процессы, использующие порт 80..."
             for pid in $(sudo lsof -t -i:80 || true); do
-              echo "Порт 80 занят процессом $pid. Завершаем..."
+              echo "Kill PID $pid"
               sudo kill -9 "$pid"
               sleep 1
             done
-
-            # Ждём окончательного освобождения порта
+          
+            echo "⌛ Ждём, пока порт 80 освободится..."
             while sudo lsof -i:80 > /dev/null; do
-              echo "Порт 80 ещё занят, ждём..."
               sleep 1
             done
-
-            echo "Порт 80 освобождён. Пауза 3 секунды перед запуском..."
-            sleep 3
-
-            # Запускаем новый контейнер
+          
+            echo "✅ Порт 80 свободен. Запуск нового контейнера..."
             docker run -d --name my_app -p 80:8000 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           EOF
