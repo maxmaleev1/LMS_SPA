@@ -130,8 +130,8 @@ jobs:
           
             echo "⌛ Ждём удаления контейнера my_app..."
             while docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; do
-              sleep 1
               docker rm my_app || true
+              sleep 1
             done
           
             echo "🔍 Проверяем, кто слушает порт 80 в Docker..."
@@ -160,7 +160,15 @@ jobs:
               sleep 1
             done
           
-            echo "✅ Порт 80 свободен. Запуск нового контейнера..."
+            echo "✅ Порт 80 свободен. Проверка контейнера my_app..."
+          
+            # Удаляем контейнер my_app, если он остался по имени
+            if docker ps -a --format '{{.Names}}' | grep -q '^my_app$'; then
+              echo "Удаляем старый контейнер my_app (остаток)..."
+              docker rm -f my_app || true
+            fi
+          
+            echo "🚀 Запуск нового контейнера..."
             docker run -d --name my_app -p 80:8000 \
               ${{ secrets.DOCKER_HUB_USERNAME }}/my_app:${{ github.sha }}
           EOF
