@@ -44,7 +44,8 @@ services:
       - "80:80"
     volumes:
       - .nginx/nginx.conf:/etc/nginx/conf.d
-      - static_volume:/code/static
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
 
   web:
     build: .
@@ -68,8 +69,8 @@ services:
     bash -c "python manage.py migrate \
     && python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - .:/code
-      - static_volume:/code/static
+      - .:/app
+      - static_volume:/app/static
     ports:
       - "8000:8000"
     depends_on:
