@@ -62,26 +62,6 @@ services:
     env_file:
       - ./.env
 
-  app:
-    build: .
-    container_name: app
-  command: >
-    bash -c "python manage.py migrate \
-    && python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - .:/app
-      - static_volume:/app/static
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
-    env_file:
-      - ./.env
-    environment:
-      - DEBUG=False
-      - POSTGRES_HOST=db
-
 volumes:
   postgres_data:
   static_volume:
