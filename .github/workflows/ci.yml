@@ -134,10 +134,16 @@ jobs:
               docker rm my_app || true
             done
           
-            # Проверяем, занят ли порт 80, и освобождаем его
+            # Проверяем и освобождаем порт 80 (убиваем все процессы)
             for pid in $(sudo lsof -t -i:80 || true); do
               echo "Порт 80 занят процессом $pid. Завершаем..."
               sudo kill -9 "$pid"
+              sleep 1
+            done
+          
+            # Ждём, пока порт 80 окончательно освободится
+            while sudo lsof -i:80 > /dev/null; do
+              echo "Порт 80 ещё занят, ждём освобождения..."
               sleep 1
             done
           
